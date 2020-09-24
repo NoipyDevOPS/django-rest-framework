@@ -45,7 +45,7 @@ For more complex cases you might also want to override various methods on the vi
 
 For very simple cases you might want to pass through any class attributes using the `.as_view()` method.  For example, your URLconf might include something like the following entry:
 
-    url(r'^/users/', ListCreateAPIView.as_view(queryset=User.objects.all(), serializer_class=UserSerializer), name='user-list')
+    path('users/', ListCreateAPIView.as_view(queryset=User.objects.all(), serializer_class=UserSerializer), name='user-list')
 
 ---
 
@@ -319,7 +319,7 @@ Often you'll want to use the existing generic views, but use some slightly custo
 
 For example, if you need to lookup objects based on multiple fields in the URL conf, you could create a mixin class like the following:
 
-    class MultipleFieldLookupMixin(object):
+    class MultipleFieldLookupMixin:
         """
         Apply this mixin to any view or viewset to get multiple field filtering
         based on a `lookup_fields` attribute, instead of the default single field filtering.

@@ -21,7 +21,7 @@ Let's start by creating a simple object we can use for example purposes:
 
     from datetime import datetime
 
-    class Comment(object):
+    class Comment:
         def __init__(self, email, content, created=None):
             self.email = email
             self.content = content
@@ -238,10 +238,12 @@ Serializer classes can also include reusable validators that are applied to the 
 
         class Meta:
             # Each room only has one event per day.
-            validators = UniqueTogetherValidator(
-                queryset=Event.objects.all(),
-                fields=['room_number', 'date']
-            )
+            validators = [
+                UniqueTogetherValidator(
+                    queryset=Event.objects.all(),
+                    fields=['room_number', 'date']
+                )
+            ]
 
 For more information see the [validators documentation](validators.md).
 
@@ -333,7 +335,7 @@ Here's an example for an `.update()` method on our previous `UserSerializer` cla
         def update(self, instance, validated_data):
             profile_data = validated_data.pop('profile')
             # Unless the application properly enforces that this field is
-            # always set, the follow could raise a `DoesNotExist`, which
+            # always set, the following could raise a `DoesNotExist`, which
             # would need to be handled.
             profile = instance.profile
 
@@ -382,8 +384,8 @@ This manager class now more nicely encapsulates that user instances and profile 
     def create(self, validated_data):
         return User.objects.create(
             username=validated_data['username'],
-            email=validated_data['email']
-            is_premium_member=validated_data['profile']['is_premium_member']
+            email=validated_data['email'],
+            is_premium_member=validated_data['profile']['is_premium_member'],
             has_support_contract=validated_data['profile']['has_support_contract']
         )
 
@@ -593,7 +595,7 @@ Normally if a `ModelSerializer` does not generate the fields you need by default
 
 ### `.serializer_field_mapping`
 
-A mapping of Django model classes to REST framework serializer classes. You can override this mapping to alter the default serializer classes that should be used for each model class.
+A mapping of Django model fields to REST framework serializer fields. You can override this mapping to alter the default serializer fields that should be used for each model field.
 
 ### `.serializer_related_field`
 
@@ -1176,6 +1178,11 @@ The [html-json-forms][html-json-forms] package provides an algorithm and seriali
 
 The [drf-writable-nested][drf-writable-nested] package provides writable nested model serializer which allows to create/update models with nested related data.
 
+## DRF Encrypt Content
+
+The [drf-encrypt-content][drf-encrypt-content] package helps you encrypt your data, serialized through ModelSerializer. It also contains some helper functions. Which helps you to encrypt your data. 
+
+
 [cite]: https://groups.google.com/d/topic/django-users/sVFaOfQi4wY/discussion
 [relations]: relations.md
 [model-managers]: https://docs.djangoproject.com/en/stable/topics/db/managers/
@@ -1197,3 +1204,4 @@ The [drf-writable-nested][drf-writable-nested] package provides writable nested 
 [drf-serializer-extensions]: https://github.com/evenicoulddoit/django-rest-framework-serializer-extensions
 [djangorestframework-queryfields]: https://djangorestframework-queryfields.readthedocs.io/
 [drf-writable-nested]: https://github.com/beda-software/drf-writable-nested
+[drf-encrypt-content]: https://github.com/oguzhancelikarslan/drf-encrypt-content

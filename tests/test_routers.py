@@ -1,14 +1,12 @@
 from collections import namedtuple
 
 import pytest
-from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.test import TestCase, override_settings
-from django.urls import resolve, reverse
+from django.urls import include, path, resolve, reverse
 
 from rest_framework import permissions, serializers, viewsets
-from rest_framework.compat import get_regex_pattern
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter, SimpleRouter
@@ -119,7 +117,7 @@ class TestSimpleRouter(URLPatternsTestCase, TestCase):
     router.register('basics', BasicViewSet, basename='basic')
 
     urlpatterns = [
-        url(r'^api/', include(router.urls)),
+        path('api/', include(router.urls)),
     ]
 
     def setUp(self):
@@ -164,8 +162,8 @@ class TestSimpleRouter(URLPatternsTestCase, TestCase):
 
 class TestRootView(URLPatternsTestCase, TestCase):
     urlpatterns = [
-        url(r'^non-namespaced/', include(namespaced_router.urls)),
-        url(r'^namespaced/', include((namespaced_router.urls, 'namespaced'), namespace='namespaced')),
+        path('non-namespaced/', include(namespaced_router.urls)),
+        path('namespaced/', include((namespaced_router.urls, 'namespaced'), namespace='namespaced')),
     ]
 
     def test_retrieve_namespaced_root(self):
@@ -182,8 +180,8 @@ class TestCustomLookupFields(URLPatternsTestCase, TestCase):
     Ensure that custom lookup fields are correctly routed.
     """
     urlpatterns = [
-        url(r'^example/', include(notes_router.urls)),
-        url(r'^example2/', include(kwarged_notes_router.urls)),
+        path('example/', include(notes_router.urls)),
+        path('example2/', include(kwarged_notes_router.urls)),
     ]
 
     def setUp(self):
@@ -192,8 +190,7 @@ class TestCustomLookupFields(URLPatternsTestCase, TestCase):
 
     def test_custom_lookup_field_route(self):
         detail_route = notes_router.urls[-1]
-        detail_url_pattern = get_regex_pattern(detail_route)
-        assert '<uuid>' in detail_url_pattern
+        assert '<uuid>' in detail_route.pattern.regex.pattern
 
     def test_retrieve_lookup_field_list_view(self):
         response = self.client.get('/example/notes/')
@@ -229,7 +226,7 @@ class TestLookupValueRegex(TestCase):
     def test_urls_limited_by_lookup_value_regex(self):
         expected = ['^notes/$', '^notes/(?P<uuid>[0-9a-f]{32})/$']
         for idx in range(len(expected)):
-            assert expected[idx] == get_regex_pattern(self.urls[idx])
+            assert expected[idx] == self.urls[idx].pattern.regex.pattern
 
 
 @override_settings(ROOT_URLCONF='tests.test_routers')
@@ -240,8 +237,8 @@ class TestLookupUrlKwargs(URLPatternsTestCase, TestCase):
     Setup a deep lookup_field, but map it to a simple URL kwarg.
     """
     urlpatterns = [
-        url(r'^example/', include(notes_router.urls)),
-        url(r'^example2/', include(kwarged_notes_router.urls)),
+        path('example/', include(notes_router.urls)),
+        path('example2/', include(kwarged_notes_router.urls)),
     ]
 
     def setUp(self):
@@ -249,8 +246,7 @@ class TestLookupUrlKwargs(URLPatternsTestCase, TestCase):
 
     def test_custom_lookup_url_kwarg_route(self):
         detail_route = kwarged_notes_router.urls[-1]
-        detail_url_pattern = get_regex_pattern(detail_route)
-        assert '^notes/(?P<text>' in detail_url_pattern
+        assert '^notes/(?P<text>' in detail_route.pattern.regex.pattern
 
     def test_retrieve_lookup_url_kwarg_detail_view(self):
         response = self.client.get('/example2/notes/fo/')
@@ -273,7 +269,7 @@ class TestTrailingSlashIncluded(TestCase):
     def test_urls_have_trailing_slash_by_default(self):
         expected = ['^notes/$', '^notes/(?P<pk>[^/.]+)/$']
         for idx in range(len(expected)):
-            assert expected[idx] == get_regex_pattern(self.urls[idx])
+            assert expected[idx] == self.urls[idx].pattern.regex.pattern
 
 
 class TestTrailingSlashRemoved(TestCase):
@@ -288,7 +284,7 @@ class TestTrailingSlashRemoved(TestCase):
     def test_urls_can_have_trailing_slash_removed(self):
         expected = ['^notes$', '^notes/(?P<pk>[^/.]+)$']
         for idx in range(len(expected)):
-            assert expected[idx] == get_regex_pattern(self.urls[idx])
+            assert expected[idx] == self.urls[idx].pattern.regex.pattern
 
 
 class TestNameableRoot(TestCase):
@@ -429,7 +425,7 @@ class TestDynamicListAndDetailRouter(TestCase):
 
 class TestEmptyPrefix(URLPatternsTestCase, TestCase):
     urlpatterns = [
-        url(r'^empty-prefix/', include(empty_prefix_router.urls)),
+        path('empty-prefix/', include(empty_prefix_router.urls)),
     ]
 
     def test_empty_prefix_list(self):
@@ -446,7 +442,7 @@ class TestEmptyPrefix(URLPatternsTestCase, TestCase):
 
 class TestRegexUrlPath(URLPatternsTestCase, TestCase):
     urlpatterns = [
-        url(r'^regex/', include(regex_url_path_router.urls)),
+        path('regex/', include(regex_url_path_router.urls)),
     ]
 
     def test_regex_url_path_list(self):
@@ -465,7 +461,7 @@ class TestRegexUrlPath(URLPatternsTestCase, TestCase):
 
 class TestViewInitkwargs(URLPatternsTestCase, TestCase):
     urlpatterns = [
-        url(r'^example/', include(notes_router.urls)),
+        path('example/', include(notes_router.urls)),
     ]
 
     def test_suffix(self):

@@ -13,7 +13,6 @@ from django.utils.timezone import activate, deactivate, override, utc
 
 import rest_framework
 from rest_framework import exceptions, serializers
-from rest_framework.compat import ProhibitNullCharactersValidator
 from rest_framework.fields import (
     BuiltinSignatureError, DjangoImageField, is_simple_callable
 )
@@ -670,7 +669,7 @@ class TestBooleanField(FieldValues):
         for input_value in inputs:
             with pytest.raises(serializers.ValidationError) as exc_info:
                 field.run_validation(input_value)
-            expected = ['Must be a valid boolean.'.format(input_value)]
+            expected = ['Must be a valid boolean.']
             assert exc_info.value.detail == expected
 
 
@@ -698,7 +697,7 @@ class TestNullBooleanField(TestBooleanField):
         None: None,
         'other': True
     }
-    field = serializers.NullBooleanField()
+    field = serializers.BooleanField(allow_null=True)
 
 
 class TestNullableBooleanField(TestNullBooleanField):
@@ -747,7 +746,6 @@ class TestCharField(FieldValues):
             field.run_validation('   ')
         assert exc_info.value.detail == ['This field may not be blank.']
 
-    @pytest.mark.skipif(ProhibitNullCharactersValidator is None, reason="Skipped on Django < 2.0")
     def test_null_bytes(self):
         field = serializers.CharField()
 
@@ -757,6 +755,21 @@ class TestCharField(FieldValues):
             assert exc_info.value.detail == [
                 'Null characters are not allowed.'
             ]
+
+    def test_surrogate_characters(self):
+        field = serializers.CharField()
+
+        for code_point, expected_message in (
+            (0xD800, 'Surrogate characters are not allowed: U+D800.'),
+            (0xDFFF, 'Surrogate characters are not allowed: U+DFFF.'),
+        ):
+            with pytest.raises(serializers.ValidationError) as exc_info:
+                field.run_validation(chr(code_point))
+            assert exc_info.value.detail[0].code == 'surrogate_characters_not_allowed'
+            assert str(exc_info.value.detail[0]) == expected_message
+
+        for code_point in (0xD800 - 1, 0xDFFF + 1):
+            field.run_validation(chr(code_point))
 
     def test_iterable_validators(self):
         """
